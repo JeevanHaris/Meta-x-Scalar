@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Triage AI Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="dark-theme">
+    <div class="glass-container">
+        <header>
+            <div class="logo">
+                <span class="icon">⚡</span>
+                <h1>Ticket<span>Triage</span> AI</h1>
+            </div>
+            <div class="header-metrics">
+                <div class="metric-card" id="avg-score-card">
+                    <span class="label">Avg Score</span>
+                    <span class="value" id="avg-score">0.0000</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <aside class="sidebar">
+                <div class="nav-section">
+                    <h3>Available Tasks</h3>
+                    <div class="task-tabs">
+                        <button class="task-tab active" data-task="task_easy">
+                            <span class="task-icon">🟢</span>
+                            <div class="task-info">
+                                <span class="task-name">Easy Path</span>
+                                <span class="task-desc">Basic Classification</span>
+                            </div>
+                        </button>
+                        <button class="task-tab" data-task="task_medium">
+                            <span class="task-icon">🟡</span>
+                            <div class="task-info">
+                                <span class="task-name">Medium Path</span>
+                                <span class="task-desc">Respond & Escalate</span>
+                            </div>
+                        </button>
+                        <button class="task-tab" data-task="task_hard">
+                            <span class="task-icon">🔴</span>
+                            <div class="task-info">
+                                <span class="task-name">Hard Path</span>
+                                <span class="task-desc">Full Inbox Mgmt</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <h3>Execution Status</h3>
+                    <div class="status-list">
+                        <div class="status-item">
+                            <span class="dot green"></span>
+                            <span class="text">Environment Ready</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="dot blue"></span>
+                            <span class="text">Groq LLM Connected</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="content-area">
+                <div class="task-header">
+                    <h2 id="current-task-name">Basic Ticket Classification</h2>
+                    <p id="current-task-desc" class="task-mission">Initializing...</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="label">Score</span>
+                        <div class="progress-bar">
+                            <div class="progress" id="score-progress" style="width: 0%"></div>
+                        </div>
+                        <span class="value" id="task-score">0.0000</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="label">Classified</span>
+                        <span class="value" id="stat-classified">0/0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="label">Responded</span>
+                        <span class="value" id="stat-responded">0/0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="label">Steps Taken</span>
+                        <span class="value" id="stat-steps">0</span>
+                    </div>
+                </div>
+
+                <div class="results-viewer">
+                    <div class="view-tabs">
+                        <button class="view-tab active" data-view="logs">Action Logs</button>
+                        <button class="view-tab" data-view="details">Grader Details</button>
+                    </div>
+                    <div class="scroll-container">
+                        <div id="logs-view" class="view-content active">
+                            <ul class="action-list" id="action-list">
+                                <!-- Log items injected here -->
+                            </ul>
+                        </div>
+                        <div id="details-view" class="view-content">
+                            <pre id="grader-details-raw"></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="bg-gradient"></div>
+    <div class="ambient-glow g1"></div>
+    <div class="ambient-glow g2"></div>
+
+    <script src="app.js" type="module"></script>
+</body>
+</html>
