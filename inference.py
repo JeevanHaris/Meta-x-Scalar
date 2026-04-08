@@ -129,6 +129,7 @@ def run_task(task_id: str) -> Dict[str, Any]:
     print(f"\n{'='*65}")
     print(f"  TASK: {task_id}")
     print(f"{'='*65}")
+    print(f"[START] task={task_id}", flush=True)
 
     client_env = TicketTriageEnv(base_url=SERVER_URL)
     with client_env.sync() as env:
@@ -186,6 +187,7 @@ def run_task(task_id: str) -> Dict[str, Any]:
                 obs_dict = result.observation.model_dump()
                 step_reward = result.reward or 0.0
                 total_reward += step_reward
+                print(f"[STEP] step={step+1} reward={step_reward}", flush=True)
                 done = result.done
                 log.append({
                     "step": step + 1,
@@ -204,6 +206,7 @@ def run_task(task_id: str) -> Dict[str, Any]:
         print(f"\n  Final state:")
         print(f"  Tickets classified : {state.tickets_classified}/{state.tickets_total}")
         print(f"  Tickets responded  : {state.tickets_responded}/{state.tickets_total}")
+        print(f"[END] task={task_id} score={state.final_score} steps={step}", flush=True)
 
     return {
         "task_id":         task_id,
