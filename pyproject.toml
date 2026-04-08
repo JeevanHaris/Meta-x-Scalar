@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ticket-triage"
+version = "0.1.0"
+description = "Ticket Triage AI environment for OpenEnv"
+authors = [
+    { name = "Developer", email = "dev@example.com" }
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "python-dotenv",
+    "openai",
+    "pydantic",
+    "openenv-core",
+]
+requires-python = ">=3.9"
+
+[tool.setuptools]
+# Ensure these match the package/module structure
+packages = ["server"]
+py-modules = ["inference", "models", "graders", "tasks", "client"]
+
+[project.scripts]
+server = "server.app:main"
