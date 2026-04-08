@@ -1,0 +1,29 @@
+{
+  "task_easy": {
+    "final_score": 0.0,
+    "tickets_classified": 0,
+    "tickets_responded": 0,
+    "tickets_total": 5,
+    "steps_taken": 0,
+    "action_log": [],
+    "grader_details": {}
+  },
+  "task_medium": {
+    "final_score": 0.0,
+    "tickets_classified": 0,
+    "tickets_responded": 0,
+    "tickets_total": 5,
+    "steps_taken": 0,
+    "action_log": [],
+    "grader_details": {}
+  },
+  "task_hard": {
+    "final_score": 0.0,
+    "tickets_classified": 0,
+    "tickets_responded": 0,
+    "tickets_total": 8,
+    "steps_taken": 0,
+    "action_log": [],
+    "grader_details": {}
+  }
+}
