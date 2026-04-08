@@ -354,7 +354,7 @@ class TicketTriageEnvironment(Environment):
     def get_final_score(self) -> Tuple[float, Dict[str, Any]]:
         """Run the grader and return final score. Safe to call at any point."""
         if self._task is None:
-            return 0.0, {}
+            return 0.01, {}
         return self._run_grader()
 
     def list_tasks(self) -> Dict[str, Any]:

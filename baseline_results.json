@@ -1,6 +1,6 @@
 {
   "task_easy": {
-    "final_score": 0.0,
+    "final_score": 0.01,
     "tickets_classified": 0,
     "tickets_responded": 0,
     "tickets_total": 5,
@@ -9,7 +9,7 @@
     "grader_details": {}
   },
   "task_medium": {
-    "final_score": 0.0,
+    "final_score": 0.01,
     "tickets_classified": 0,
     "tickets_responded": 0,
     "tickets_total": 5,
