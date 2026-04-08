@@ -15,6 +15,12 @@ def _norm(val: Any) -> str:
     return str(val).strip().lower()
 
 
+def _clamp_score(score: float) -> float:
+    """Ensure score is strictly between 0 and 1, as required by validator."""
+    return max(0.01, min(0.99, score))
+
+
+
 # ─────────────────────────────────────────────
 # EASY GRADER
 # Scores: 0.5 × category_accuracy + 0.5 × priority_accuracy
@@ -49,7 +55,7 @@ def grade_easy(
 
     cat_acc = cat_correct / total
     pri_acc = pri_correct / total
-    score   = 0.5 * cat_acc + 0.5 * pri_acc
+    score   = _clamp_score(0.5 * cat_acc + 0.5 * pri_acc)
 
     return score, {
         "category_accuracy": round(cat_acc, 4),
@@ -131,7 +137,7 @@ def grade_medium(
     cls_acc  = cls_total  / total
     resp_acc = resp_total / total
     esc_acc  = esc_total  / total
-    score    = 0.30 * cls_acc + 0.40 * resp_acc + 0.30 * esc_acc
+    score    = _clamp_score(0.30 * cls_acc + 0.40 * resp_acc + 0.30 * esc_acc)
 
     return score, {
         "classification_score": round(cls_acc,  4),
@@ -221,7 +227,7 @@ def grade_hard(
     n_actions   = len(actions_taken)
     efficiency  = max(0.0, 1.0 - max(0, n_actions - 24) / 10.0)
 
-    score = (
+    score = _clamp_score(
         0.20 * cls_score
       + 0.20 * resp_score
       + 0.15 * esc_score
@@ -230,6 +236,7 @@ def grade_hard(
       + 0.10 * sla_score
       + 0.10 * efficiency
     )
+
 
     return score, {
         "classification_score":   round(cls_score,     4),
