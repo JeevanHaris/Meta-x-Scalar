@@ -100,7 +100,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Initial load
+    async function refresh() {
+        let newResults = await loadResults();
+        if (newResults) {
+            results = newResults;
+            const activeTab = document.querySelector('.task-tab.active');
+            updateUI(activeTab ? activeTab.dataset.task : 'task_easy', results);
+        }
+    }
+
     if (results) {
         updateUI('task_easy', results);
     }
+    
+    // Auto-refresh every 5 seconds
+    setInterval(refresh, 5000);
 });

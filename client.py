@@ -18,7 +18,8 @@ Usage (sync):
         result = env.step(TicketAction(...))
 """
 
-from openenv.core.http_env_client import HTTPEnvClient
+from openenv.core.env_client import EnvClient
+from openenv.core.client_types import StepResult
 
 try:
     from .models import TicketAction, TicketObservation, TicketState
@@ -26,7 +27,7 @@ except ImportError:
     from models import TicketAction, TicketObservation, TicketState
 
 
-class TicketTriageEnv(HTTPEnvClient[TicketAction, TicketObservation]):
+class TicketTriageEnv(EnvClient[TicketAction, TicketObservation, TicketState]):
     """
     Typed client for the Ticket Triage OpenEnv environment.
     Connects via HTTP to a running server (local or Hugging Face Space).
@@ -34,6 +35,27 @@ class TicketTriageEnv(HTTPEnvClient[TicketAction, TicketObservation]):
 
     def _step_payload(self, action: TicketAction) -> dict:
         return action.model_dump(exclude_none=True)
+
+    def _parse_result(self, payload: dict) -> StepResult[TicketObservation]:
+        # The payload from openenv-core 0.2.3 usually contains:
+        # {"observation": {...}, "reward": ..., "done": ...}
+        obs_data = payload.get("observation", payload)
+        
+        # Ensure we don't pass 'observation' itself into the constructor if it's still there
+        if isinstance(obs_data, dict) and "observation" in obs_data and obs_data is payload:
+             obs_data = obs_data["observation"]
+
+        obs = TicketObservation(**obs_data)
+        
+        # Sync reward and done from the envelope payload if available
+        reward = payload.get("reward", obs.reward)
+        done = payload.get("done", obs.done)
+        
+        # Update the object as well
+        obs.reward = reward
+        obs.done = done
+        
+        return StepResult(observation=obs, reward=reward, done=done)
 
     def _parse_state(self, payload: dict) -> TicketState:
         return TicketState(**payload)

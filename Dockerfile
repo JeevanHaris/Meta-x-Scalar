@@ -14,7 +14,8 @@ RUN pip install --no-cache-dir -r server/requirements.txt
 # Copy application code
 COPY models.py tasks.py graders.py ./
 COPY server/ ./server/
-COPY openenv.yaml README.md ./
+COPY dashboard/ ./dashboard/
+COPY openenv.yaml ./
 
 # Create __init__ for package imports
 RUN touch __init__.py

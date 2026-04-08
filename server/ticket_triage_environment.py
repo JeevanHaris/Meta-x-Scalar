@@ -146,6 +146,9 @@ class TicketTriageEnvironment(Environment):
         if self._task is None:
             return TicketState()
         ts = self._ticket_states
+        # Run grader for final score
+        score, details = self.get_final_score()
+
         return TicketState(
             episode_id=self._episode_id,
             step_count=self._step_count,
@@ -154,6 +157,8 @@ class TicketTriageEnvironment(Environment):
             difficulty=self._task.difficulty,
             max_steps=self._task.max_steps,
             cumulative_reward=round(self._cumulative_reward, 4),
+            final_score=round(score, 4),
+            grader_details=details,
             episode_done=self._episode_done,
             tickets_total=len(self._task.tickets),
             tickets_classified=sum(1 for s in ts.values() if s.get("category")),

@@ -23,6 +23,9 @@ import sys
 import time
 from typing import Any, Dict, List, Optional
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from openai import OpenAI
 
 # ── Config ──────────────────────────────────────────────────────────
@@ -36,10 +39,12 @@ if not HF_TOKEN:
 
 client = OpenAI(api_key=HF_TOKEN, base_url=API_BASE_URL)
 
-# ── Import env directly (no HTTP server required for inference) ──────
+# ── Import env client (allows dashboard interaction) ──────
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from server.ticket_triage_environment import TicketTriageEnvironment
+from client import TicketTriageEnv
 from models import TicketAction
+
+SERVER_URL = os.environ.get("SERVER_URL", "http://localhost:7860")
 
 
 # ── Prompts ─────────────────────────────────────────────────────────
@@ -125,87 +130,87 @@ def run_task(task_id: str) -> Dict[str, Any]:
     print(f"  TASK: {task_id}")
     print(f"{'='*65}")
 
-    env = TicketTriageEnvironment()
-    obs = env.reset(task_id=task_id)
-    obs_dict = obs.model_dump()
+    client_env = TicketTriageEnv(base_url=SERVER_URL)
+    with client_env.sync() as env:
+        result = env.reset(task_id=task_id)
+        obs_dict = result.observation.model_dump()
 
-    messages: List[Dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
-    total_reward = 0.0
-    step = 0
-    done = False
-    log: List[Dict[str, Any]] = []
+        messages: List[Dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
+        total_reward = 0.0
+        step = 0
+        done = False
+        log: List[Dict[str, Any]] = []
 
-    while not done and step < obs_dict["max_steps"]:
-        user_msg = _build_user_prompt(obs_dict)
-        messages.append({"role": "user", "content": user_msg})
+        while not done and step < obs_dict["max_steps"]:
+            user_msg = _build_user_prompt(obs_dict)
+            messages.append({"role": "user", "content": user_msg})
 
-        # Trim history to avoid TPM limits: Keep system prompt + last 6 messages
-        if len(messages) > 7:
-            messages = [messages[0]] + messages[-6:]
+            # Trim history to avoid TPM limits: Keep system prompt + last 6 messages
+            if len(messages) > 7:
+                messages = [messages[0]] + messages[-6:]
 
-        try:
-            resp = client.chat.completions.create(
-                model=MODEL_NAME,
-                messages=messages,
-                max_tokens=512,
-                temperature=0.1,
+            try:
+                resp = client.chat.completions.create(
+                    model=MODEL_NAME,
+                    messages=messages,
+                    max_tokens=512,
+                    temperature=0.1,
+                )
+                assistant_text = resp.choices[0].message.content
+                messages.append({"role": "assistant", "content": assistant_text})
+            except Exception as e:
+                print(f"  [ERROR] LLM call failed at step {step}: {e}")
+                break
+
+            action_dict = _parse_action(assistant_text)
+            if not action_dict:
+                print(f"  [WARN] Step {step+1}: could not parse JSON from response")
+                step += 1
+                continue
+
+            action = _make_action(action_dict)
+            if not action:
+                step += 1
+                continue
+
+            # Print compact progress
+            print(
+                f"  step {step+1:2d}: {action.action_type:10s} {action.ticket_id}"
+                + (f" | cat={action.category}" if action.category else "")
+                + (f" | pri={action.priority}"  if action.priority  else "")
+                + (f" | esc={action.escalate_to}" if action.escalate_to else "")
             )
-            assistant_text = resp.choices[0].message.content
-            messages.append({"role": "assistant", "content": assistant_text})
-        except Exception as e:
-            print(f"  [ERROR] LLM call failed at step {step}: {e}")
-            break
 
-        action_dict = _parse_action(assistant_text)
-        if not action_dict:
-            print(f"  [WARN] Step {step+1}: could not parse JSON from response")
+            try:
+                result = env.step(action)
+                obs_dict = result.observation.model_dump()
+                step_reward = result.reward or 0.0
+                total_reward += step_reward
+                done = result.done
+                log.append({
+                    "step": step + 1,
+                    "action": action_dict,
+                    "reward": step_reward,
+                })
+            except RuntimeError as e:
+                print(f"  [ENV] {e}")
+                break
+
             step += 1
-            continue
+            time.sleep(0.25)   # polite rate limiting
 
-        action = _make_action(action_dict)
-        if not action:
-            step += 1
-            continue
-
-        # Print compact progress
-        print(
-            f"  step {step+1:2d}: {action.action_type:10s} {action.ticket_id}"
-            + (f" | cat={action.category}" if action.category else "")
-            + (f" | pri={action.priority}"  if action.priority  else "")
-            + (f" | esc={action.escalate_to}" if action.escalate_to else "")
-        )
-
-        try:
-            obs = env.step(action)
-            obs_dict = obs.model_dump()
-            step_reward = obs.reward or 0.0
-            total_reward += step_reward
-            done = obs.done
-            log.append({
-                "step": step + 1,
-                "action": action_dict,
-                "reward": step_reward,
-            })
-        except RuntimeError as e:
-            print(f"  [ENV] {e}")
-            break
-
-        step += 1
-        time.sleep(0.25)   # polite rate limiting
-
-    # Final score from grader
-    final_score, details = env.get_final_score()
-    state = env.state
-    print(f"\n  Final grader score : {final_score:.4f}")
-    print(f"  Tickets classified : {state.tickets_classified}/{state.tickets_total}")
-    print(f"  Tickets responded  : {state.tickets_responded}/{state.tickets_total}")
+        # Sync state for final counts
+        state = env.state()
+        print(f"\n  Final state:")
+        print(f"  Tickets classified : {state.tickets_classified}/{state.tickets_total}")
+        print(f"  Tickets responded  : {state.tickets_responded}/{state.tickets_total}")
 
     return {
         "task_id":         task_id,
         "steps_taken":     step,
         "total_reward":    round(total_reward, 4),
-        "final_score":     round(final_score,  4),
-        "grader_details":  details,
+        "final_score":     state.final_score,
+        "grader_details":  state.grader_details,
         "tickets_classified": state.tickets_classified,
         "tickets_responded":  state.tickets_responded,
         "tickets_total":      state.tickets_total,
@@ -221,6 +226,10 @@ def main() -> None:
     results = {}
     for task_id in ["task_easy", "task_medium", "task_hard"]:
         results[task_id] = run_task(task_id)
+        
+        # Save results after each task to update dashboard incrementally
+        with open("baseline_results.json", "w") as f:
+            json.dump(results, f, indent=2, default=str)
 
     print(f"\n{'='*65}")
     print("BASELINE RESULTS SUMMARY")

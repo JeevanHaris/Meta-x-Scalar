@@ -119,6 +119,8 @@ class TicketState(State):
     difficulty: str = Field(default="")
     max_steps: int = Field(default=10)
     cumulative_reward: float = Field(default=0.0)
+    final_score: float = Field(default=0.0)
+    grader_details: Dict[str, Any] = Field(default_factory=dict)
     episode_done: bool = Field(default=False)
     tickets_total: int = Field(default=0)
     tickets_classified: int = Field(default=0)
